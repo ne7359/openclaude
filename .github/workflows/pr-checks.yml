@@ -27,6 +27,24 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      # ===== 新增：本地构建步骤 =====
+      - name: Build package locally
+        run: bun run build
+
+      # ===== 新增：本地安装构建产物 =====
+      - name: Install built package locally
+        run: |
+          # 打包构建产物为本地 tarball
+          npm pack
+          # 获取生成的包文件名（通常是 gitlawb-openclaude-x.x.x.tgz）
+          PACKAGE_FILE=$(ls *.tgz | head -n 1)
+          echo "Generated package: $PACKAGE_FILE"
+          # 全局安装本地包，而不是从远程下载
+          npm install -g "./$PACKAGE_FILE"
+          # 验证安装
+          which openclaude
+          openclaude --version
+
       - name: Smoke check
         run: bun run smoke
 
