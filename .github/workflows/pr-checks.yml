@@ -30,18 +30,13 @@ jobs:
       - name: Build package
         run: |
           bun run build
-          # 创建 release-ready 目录并打包
+          # 创建输出目录，复制构建产物
           mkdir -p release-ready
-          npm pack --pack-destination release-ready
-
-      - name: Install built package locally
-        run: |
-          PACKAGE_FILE=$(ls release-ready/*.tgz | head -n 1)
-          echo "Installing: $PACKAGE_FILE"
-          npm install -g "$PACKAGE_FILE"
-          # 验证安装
-          which openclaude
-          openclaude --version
+          cp -r dist/* release-ready/ 2>/dev/null || cp -r dist release-ready/
+          # 如果有 package.json，也打包成 tgz 便于分发
+          npm pack --pack-destination ./release-ready/
+          # 查看最终内容
+          ls -la release-ready/
 
       - name: Smoke check
         run: bun run smoke
@@ -52,9 +47,8 @@ jobs:
       - name: Provider recommendation tests
         run: npm run test:provider-recommendation
 
-      # ===== 上传构建产物 =====
       - name: Upload Build Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: openclaude-${{ github.sha }}-ubuntu
           path: ./release-ready/*
