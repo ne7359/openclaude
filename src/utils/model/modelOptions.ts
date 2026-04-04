@@ -1,4 +1,4 @@
-// biome-ignore-all assist/source/organizeImports: ANT-ONLY import markers must not be reordered
+// biome-ignore-all assist/source/organizeImports: internal-only import markers must not be reordered
 import { getInitialMainLoopModel } from '../../bootstrap/state.js'
 import {
   isClaudeAISubscriber,
@@ -32,6 +32,7 @@ import {
 } from './model.js'
 import { has1mContext } from '../context.js'
 import { getGlobalConfig } from '../config.js'
+import { getActiveOpenAIModelOptionsCache } from '../providerProfiles.js'
 import { getCachedOllamaModelOptions, isOllamaProvider } from './ollamaModels.js'
 
 // @[MODEL LAUNCH]: Update all the available and default model option strings below.
@@ -358,7 +359,7 @@ function getModelOptionsBase(fastMode = false): ModelOption[] {
     const antModelOptions: ModelOption[] = getAntModels().map(m => ({
       value: m.alias,
       label: m.label,
-      description: m.description ?? `[ANT-ONLY] ${m.label} (${m.model})`,
+      description: m.description ?? `[internal] ${m.label} (${m.model})`,
     }))
 
     return [
@@ -565,8 +566,13 @@ export function getModelOptions(fastMode = false): ModelOption[] {
     })
   }
 
-  // Append additional model options fetched during bootstrap
-  for (const opt of getGlobalConfig().additionalModelOptionsCache ?? []) {
+  const additionalOptions =
+    getAPIProvider() === 'openai'
+      ? getActiveOpenAIModelOptionsCache()
+      : getGlobalConfig().additionalModelOptionsCache ?? []
+
+  // Append additional model options fetched during bootstrap/endpoints.
+  for (const opt of additionalOptions) {
     if (!options.some(existing => existing.value === opt.value)) {
       options.push(opt)
     }
