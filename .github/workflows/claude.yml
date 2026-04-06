@@ -1,4 +1,4 @@
-name: PR Checks
+name: claude
 
 on:
   pull_request:
