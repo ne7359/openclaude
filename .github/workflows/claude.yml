@@ -29,6 +29,17 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Build package
+        run: |
+          bun run build
+          # 创建输出目录，复制构建产物
+          mkdir -p release-ready
+          cp -r dist/* release-ready/ 2>/dev/null || cp -r dist release-ready/
+          # 如果有 package.json，也打包成 tgz 便于分发
+          npm pack --pack-destination ./release-ready/
+          # 查看最终内容
+          ls -la release-ready/
+
       - name: Smoke check
         run: bun run smoke
 
@@ -42,3 +53,10 @@ jobs:
 
       - name: Provider recommendation tests
         run: npm run test:provider-recommendation
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: openclaude
+          path: ./release-ready/*
+          retention-days: 30
